@@ -104,6 +104,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); f
 .c-olho { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: inline-flex; background: transparent; border: 0; border-radius: 6px; padding: 6px; color: var(--muted); cursor: pointer; }
 .c-olho:hover { color: var(--fg); }
 .c-olho svg { width: 20px; height: 20px; }
+/* número da versão (o mesmo do sistema; ver VERSOES.md) */
+.c-versao { margin: 12px 0 0; text-align: center; color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; }
 
 .c-btn { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 6px; padding: 9px 16px; font-weight: 600; }
 .c-btn-sec { background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; }
@@ -124,7 +126,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); f
 }
 @keyframes c-gira { to { transform: rotate(360deg); } }
 </style>
-<script src="config.js"></script>
+<script src="config.js?v=1.2"></script>
 <script>
 /* aplica o tema guardado antes de desenhar, para não piscar */
 try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
@@ -203,6 +205,7 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
         </div>
       </section>
     </main>
+    <p class="c-versao">Projetos Sync · versão 1.2 · 12/10/2026</p>
   </div>
 </div>
 
