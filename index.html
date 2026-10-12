@@ -84,7 +84,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); f
   padding: 24px 20px 22px; display: grid; gap: 18px;
   box-shadow: 0 14px 32px -20px var(--sombra);
 }
-.c-marca { font-family: var(--font-display); font-weight: 700; font-size: 2.1rem; line-height: 1.05; margin: 0; letter-spacing: .01em; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.c-marca { font-family: var(--font-display); font-weight: 700; font-size: 2.1rem; line-height: 1.05; margin: 0; letter-spacing: .01em; display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 6px; }
 .c-logo { height: 44px; width: auto; display: block; }
 .c-marca .logo-escuro { display: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .c-marca .logo-claro { display: none; } :root:not([data-theme="light"]) .c-marca .logo-escuro { display: block; } }
@@ -133,7 +133,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); f
 }
 @keyframes c-gira { to { transform: rotate(360deg); } }
 </style>
-<script src="config.js?v=1.15"></script>
+<script src="config.js?v=1.16"></script>
 <script>
 /* aplica o tema guardado antes de desenhar, para não piscar */
 try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
@@ -212,7 +212,7 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
         </div>
       </section>
     </main>
-    <p class="c-versao">Projetos Sync · versão 1.15 · 12/10/2026</p>
+    <p class="c-versao">Projetos Sync · versão 1.16 · 12/10/2026</p>
   </div>
 </div>
 
