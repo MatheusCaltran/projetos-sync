@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Projetos Sync</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232e6a39'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11.5' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Casca do Projetos Sync: só login e carregador. Este <style> continua na página depois que o sistema entra,
+   por isso fora dos tokens e do body tudo fica preso dentro de #casca (que some quando o sistema entra). */
+:root {
+  --bg: #f2f4ef;
+  --surface: #ffffff;
+  --fg: #1b221c;
+  --muted: #5b665c;
+  --line: #d6ddd3;
+  --accent: #2e6a39;
+  --accent-fg: #ffffff;
+  --warn: #8a5a00;
+  --warn-bg: #f8ecd2;
+  --ok: #2e6a39;
+  --ok-bg: #e1eee1;
+  --idle-bg: #eceff0;
+  --danger: #b3261e;
+  --sombra: rgba(24, 38, 27, .22);
+  --p0: #a3201a; --p0-bg: #fbe1de;
+  --p1: #9a4d00; --p1-bg: #fbe8d2;
+  --p2: #2f5675; --p2-bg: #e2eaf2;
+  --p3: #5b665c; --p3-bg: #eceff0;
+  --e0: #1f6fb2; --e1: #b0471f; --e2: #6b4fa8; --e3: #0f8a7e; --e4: #a87a00; --e5: #a23a6e; --e6: #3f7d20; --e7: #56677a;
+  --e8: #c0392b; --e9: #3f46b5; --e10: #8a5a2b; --e11: #7d8a12; --e12: #0e7fa3; --e13: #8e2fa3; --e14: #12805a; --e15: #2a2f2b;
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111511; --surface: #1a201b; --fg: #e4e9e2; --muted: #98a399; --line: #2b342c;
+    --accent: #7dbf89; --accent-fg: #0d1a10; --warn: #e6b65c; --warn-bg: #3a2d12;
+    --ok: #7dbf89; --ok-bg: #1d3121; --idle-bg: #242b25; --danger: #f08a82; --sombra: rgba(0, 0, 0, .55);
+    --p0: #ff9a92; --p0-bg: #421b18; --p1: #f2a865; --p1-bg: #3b2714; --p2: #9fc0dd; --p2-bg: #1d2a37; --p3: #98a399; --p3-bg: #242b25;
+    --e0: #6fb0e8; --e1: #f08d63; --e2: #b39ae6; --e3: #4fc9bb; --e4: #e3b94c; --e5: #e383b3; --e6: #8fd16a; --e7: #a3b3c4;
+    --e8: #f26b6b; --e9: #8a8ff0; --e10: #c79a6b; --e11: #c8dc5a; --e12: #5fd4f0; --e13: #d77ae8; --e14: #3fbf86; --e15: #e8ece6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111511; --surface: #1a201b; --fg: #e4e9e2; --muted: #98a399; --line: #2b342c;
+  --accent: #7dbf89; --accent-fg: #0d1a10; --warn: #e6b65c; --warn-bg: #3a2d12;
+  --ok: #7dbf89; --ok-bg: #1d3121; --idle-bg: #242b25; --danger: #f08a82; --sombra: rgba(0, 0, 0, .55);
+  --p0: #ff9a92; --p0-bg: #421b18; --p1: #f2a865; --p1-bg: #3b2714; --p2: #9fc0dd; --p2-bg: #1d2a37; --p3: #98a399; --p3-bg: #242b25;
+  --e0: #6fb0e8; --e1: #f08d63; --e2: #b39ae6; --e3: #4fc9bb; --e4: #e3b94c; --e5: #e383b3; --e6: #8fd16a; --e7: #a3b3c4;
+  --e8: #f26b6b; --e9: #8a8ff0; --e10: #c79a6b; --e11: #c8dc5a; --e12: #5fd4f0; --e13: #d77ae8; --e14: #3fbf86; --e15: #e8ece6;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+
+/* ---- casca (tudo abaixo vale só dentro de #casca) ---- */
+#casca {
+  min-height: calc(100vh - 16px); min-height: calc(100dvh - 16px);
+  display: grid; grid-template-rows: auto 1fr; gap: 8px; padding: 8px; box-sizing: border-box;
+}
+#casca [hidden] { display: none !important; }
+#casca :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#casca button, #casca input { font: inherit; }
+#casca button { cursor: pointer; }
+#casca code { font-size: .9em; background: var(--idle-bg); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+
+.c-topo { display: flex; justify-content: flex-end; }
+.c-tema { display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.c-tema:hover { color: var(--fg); border-color: var(--muted); }
+.c-tema svg { width: 18px; height: 18px; }
+
+.c-meio { display: grid; place-items: center; padding-bottom: 6vh; min-width: 0; }
+.c-cartao {
+  width: 100%; max-width: 380px; box-sizing: border-box; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 24px 20px 22px; display: grid; gap: 18px;
+  box-shadow: 0 14px 32px -20px var(--sombra);
+}
+.c-marca { font-family: var(--font-display); font-weight: 700; font-size: 2.1rem; line-height: 1.05; margin: 0; letter-spacing: .01em; }
+.c-tela { display: grid; gap: 12px; margin: 0; min-width: 0; }
+.c-campos { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 12px; }
+.c-tit { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.35rem; line-height: 1.15; }
+.c-texto { margin: 0; }
+.c-dica { margin: 0; color: var(--muted); font-size: .9rem; }
+.c-passos { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.c-passos li::marker { color: var(--muted); font-weight: 600; }
+
+.c-fld { display: grid; gap: 3px; font-size: .82rem; color: var(--muted); }
+.c-fld > span { letter-spacing: .02em; }
+.c-fld input {
+  font-size: 1rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+  padding: 9px 10px; width: 100%; box-sizing: border-box; min-width: 0;
+}
+.c-fld input:focus { border-color: var(--muted); }
+
+.c-btn { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 6px; padding: 9px 16px; font-weight: 600; }
+.c-btn-sec { background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; }
+.c-btn-sec:hover { border-color: var(--muted); }
+.c-largo { width: 100%; }
+#casca button:disabled { opacity: .6; cursor: progress; }
+.c-botoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.c-msg { margin: 0; color: var(--danger); font-weight: 600; font-size: .92rem; }
+.c-msg.info { color: var(--muted); font-weight: 500; }
+.c-msg:empty { display: none; }
+
+.c-carregando { display: flex; align-items: center; gap: 10px; color: var(--muted); margin: 0; padding: 6px 0; }
+.c-roda { width: 18px; height: 18px; flex: none; box-sizing: border-box; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; }
+@media (prefers-reduced-motion: no-preference) {
+  .c-roda { animation: c-gira .8s linear infinite; }
+  .c-btn, .c-btn-sec, .c-tema { transition: background .15s, border-color .15s; }
+}
+@keyframes c-gira { to { transform: rotate(360deg); } }
+</style>
+<script src="config.js"></script>
+<script>
+/* aplica o tema guardado antes de desenhar, para não piscar */
+try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+</head>
+<body>
+<div id="casca">
+  <div class="c-topo">
+    <button type="button" class="c-tema" id="casca-tema"></button>
+  </div>
+  <div class="c-meio">
+    <main class="c-cartao">
+      <h1 class="c-marca">Projetos Sync</h1>
+
+      <!-- sem URL no config.js -->
+      <section class="c-tela" id="tela-config" hidden>
+        <h2 class="c-tit">Falta configurar</h2>
+        <ol class="c-passos">
+          <li>No GitHub, abra o arquivo <code>config.js</code> e clique no lápis (Edit this file).</li>
+          <li>Cole entre as aspas a URL do Apps Script, a que termina em <code>/exec</code>.</li>
+          <li>Clique em Commit changes, espere 1 a 2 minutos e recarregue esta página.</li>
+        </ol>
+        <p class="c-msg" id="config-errada" hidden>O endereço atual parece errado (precisa começar com https://): <code id="config-atual"></code></p>
+        <p class="c-dica">Passo a passo completo: COMO_INSTALAR.md, parte B.</p>
+      </section>
+
+      <!-- login -->
+      <form class="c-tela" id="tela-login" hidden novalidate>
+        <h2 class="c-tit">Entrar</h2>
+        <fieldset class="c-campos" id="login-campos">
+          <label class="c-fld"><span>E-mail</span>
+            <input type="email" id="login-email" name="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
+          </label>
+          <label class="c-fld"><span>Senha</span>
+            <input type="password" id="login-senha" name="senha" autocomplete="current-password" required>
+          </label>
+          <p class="c-msg" id="login-msg" role="alert"></p>
+          <button type="submit" class="c-btn c-largo" id="login-btn">Entrar</button>
+        </fieldset>
+        <p class="c-dica">Esqueceu a senha? Peça ao administrador para resetar.</p>
+      </form>
+
+      <!-- primeiro acesso: troca da senha provisória -->
+      <form class="c-tela" id="tela-senha" hidden novalidate>
+        <h2 class="c-tit">Primeiro acesso</h2>
+        <p class="c-dica">Crie a sua senha. Mínimo de 8 caracteres.</p>
+        <fieldset class="c-campos" id="senha-campos">
+          <input type="email" id="senha-email" name="email" autocomplete="username" tabindex="-1" aria-hidden="true" hidden>
+          <input type="password" id="senha-atual" name="senha-atual" autocomplete="current-password" tabindex="-1" aria-hidden="true" hidden>
+          <label class="c-fld"><span>Senha nova</span>
+            <input type="password" id="senha-nova" name="senha-nova" autocomplete="new-password" minlength="8" required>
+          </label>
+          <label class="c-fld"><span>Repita a senha nova</span>
+            <input type="password" id="senha-repetir" name="senha-repetir" autocomplete="new-password" minlength="8" required>
+          </label>
+          <p class="c-msg" id="senha-msg" role="alert"></p>
+          <div class="c-botoes">
+            <button type="submit" class="c-btn" id="senha-btn">Salvar e entrar</button>
+            <button type="button" class="c-btn-sec" id="senha-voltar">Voltar</button>
+          </div>
+        </fieldset>
+      </form>
+
+      <!-- buscando o sistema -->
+      <section class="c-tela" id="tela-carregando" hidden>
+        <p class="c-carregando" role="status"><span class="c-roda" aria-hidden="true"></span>Carregando…</p>
+      </section>
+
+      <!-- o sistema não veio -->
+      <section class="c-tela" id="tela-erro" hidden>
+        <h2 class="c-tit">Não deu para abrir</h2>
+        <p class="c-msg" id="erro-msg" role="alert"></p>
+        <div class="c-botoes">
+          <button type="button" class="c-btn" id="erro-tentar">Tentar de novo</button>
+          <button type="button" class="c-btn-sec" id="erro-sair">Sair</button>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const CHAVE_SESSAO = "ps-sessao";     // { token, usuario }
+  const CHAVE_TEMA = "projetos-tema";   // a mesma do sistema
+  const CHAVE_AVISO = "ps-aviso";       // recado para a tela de login depois de recarregar
+  const MSG_REDE = "Sem conexão com o servidor. Tente de novo.";
+  const MSG_ESTRANHA = "O servidor respondeu algo inesperado. Confira a URL no config.js.";
+  const MSG_SESSAO = "Sua sessão terminou. Entre de novo.";
+
+  const cfg = window.PROJETOS_SYNC_CONFIG;
+  const apiUrl = cfg && typeof cfg.apiUrl === "string" ? cfg.apiUrl.trim() : "";
+  const urlOk = /^https:\/\/\S+$/.test(apiUrl);
+
+  const $ = (id) => document.getElementById(id);
+
+  let sessao = lerSessao(); // só fica guardada no navegador depois da troca de senha (se for o primeiro acesso)
+  let injetado = false;     // o sistema já está na página
+  let saindo = false;
+
+  // ---------- sessão guardada no navegador (pode falhar em janela anônima) ----------
+  function lerSessao() {
+    try {
+      const s = JSON.parse(localStorage.getItem(CHAVE_SESSAO) || "null");
+      if (s && typeof s.token === "string" && s.token && s.usuario && typeof s.usuario === "object") return s;
+    } catch (e) {}
+    return null;
+  }
+  function gravarSessao() {
+    if (!sessao) return;
+    try { localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao)); } catch (e) {}
+  }
+  function limparSessao() {
+    sessao = null;
+    try { localStorage.removeItem(CHAVE_SESSAO); } catch (e) {}
+  }
+
+  // ---------- conversa com o servidor ----------
+  async function post(corpo) {
+    let r;
+    try {
+      r = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(corpo)
+      });
+    } catch (e) {
+      return { ok: false, erro: MSG_REDE, codigo: "rede" };
+    }
+    let j = null;
+    try { j = await r.json(); } catch (e) { j = null; }
+    if (!j || typeof j !== "object" || typeof j.ok !== "boolean") {
+      return { ok: false, erro: MSG_ESTRANHA, codigo: "interno" };
+    }
+    return j;
+  }
+
+  async function api(acao, dados) {
+    const extra = dados && typeof dados === "object" ? dados : {};
+    const token = sessao ? sessao.token : "";
+    const resp = await post({ acao: acao, token: token, ...extra });
+    if (!resp.ok && resp.codigo === "sessao" && (!sessao || sessao.token === token)) sessaoVencida();
+    return resp;
+  }
+
+  function sessaoVencida() {
+    limparSessao();
+    if (injetado) {
+      // o sistema já está na página: recarregar limpa tudo e cai no login
+      if (saindo) return;
+      saindo = true;
+      try { sessionStorage.setItem(CHAVE_AVISO, MSG_SESSAO); } catch (e) {}
+      location.reload();
+    } else {
+      mostrarLogin(MSG_SESSAO);
+    }
+  }
+
+  async function sair() {
+    if (saindo) return;
+    saindo = true;
+    const token = sessao ? sessao.token : "";
+    limparSessao();
+    if (token) {
+      // avisa o servidor, mas não fica preso se ele demorar
+      await Promise.race([
+        post({ acao: "sair", token: token }),
+        new Promise((ok) => setTimeout(ok, 5000))
+      ]);
+    }
+    if (injetado) { location.reload(); return; }
+    saindo = false;
+    mostrarLogin();
+  }
+
+  // o que o sistema usa
+  window.PS = {
+    api: api,
+    get usuario() { return sessao ? sessao.usuario : null; },
+    set usuario(u) {
+      if (sessao && u && typeof u === "object") { sessao.usuario = u; gravarSessao(); }
+    },
+    sair: sair
+  };
+
+  // ---------- telas ----------
+  const TELAS = ["config", "login", "senha", "carregando", "erro"];
+  function mostrar(nome) {
+    for (const t of TELAS) {
+      const e = $("tela-" + t);
+      if (e) e.hidden = t !== nome;
+    }
+  }
+  function focar(id) {
+    const e = $(id);
+    if (!e) return;
+    try { if (matchMedia("(pointer: coarse)").matches && id.indexOf("login") === 0) return; } catch (x) {}
+    try { e.focus({ preventScroll: true }); } catch (x) { e.focus(); }
+  }
+  function msg(id, texto, info) {
+    const e = $(id);
+    if (!e) return;
+    e.textContent = texto || "";
+    e.classList.toggle("info", !!info);
+  }
+  function ocupado(form, sim, rotulo) {
+    $(form + "-campos").disabled = sim;
+    $(form + "-btn").textContent = rotulo;
+  }
+
+  function mostrarLogin(aviso) {
+    // limpa o que ficou da troca de senha
+    $("senha-atual").value = "";
+    $("senha-nova").value = "";
+    $("senha-repetir").value = "";
+    $("login-senha").value = "";
+    ocupado("login", false, "Entrar");
+    msg("login-msg", aviso || "", true);
+    mostrar("login");
+    focar($("login-email").value ? "login-senha" : "login-email");
+  }
+
+  function pedirSenhaNova(email, senhaAtual) {
+    $("senha-email").value = (sessao && sessao.usuario && sessao.usuario.email) || email;
+    $("senha-atual").value = senhaAtual;
+    $("senha-nova").value = "";
+    $("senha-repetir").value = "";
+    ocupado("senha", false, "Salvar e entrar");
+    msg("senha-msg", "");
+    mostrar("senha");
+    focar("senha-nova");
+  }
+
+  // ---------- login ----------
+  $("tela-login").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if ($("login-campos").disabled) return;
+    const email = $("login-email").value.trim();
+    const senha = $("login-senha").value;
+    if (!email || !senha) {
+      msg("login-msg", "Preencha o e-mail e a senha.");
+      focar(email ? "login-senha" : "login-email");
+      return;
+    }
+    msg("login-msg", "");
+    ocupado("login", true, "Entrando…");
+    const r = await post({ acao: "login", email: email, senha: senha });
+    ocupado("login", false, "Entrar");
+    if (!r.ok) {
+      msg("login-msg", r.erro || "Não deu para entrar.");
+      focar("login-senha");
+      return;
+    }
+    if (typeof r.token !== "string" || !r.token) {
+      msg("login-msg", MSG_ESTRANHA);
+      return;
+    }
+    sessao = { token: r.token, usuario: r.usuario && typeof r.usuario === "object" ? r.usuario : { email: email } };
+    $("login-senha").value = "";
+    if (sessao.usuario.trocarSenha) {
+      // só guarda no navegador depois de trocar a senha
+      pedirSenhaNova(email, senha);
+      return;
+    }
+    gravarSessao();
+    carregarSistema();
+  });
+
+  // ---------- primeiro acesso ----------
+  $("tela-senha").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if ($("senha-campos").disabled) return;
+    const atual = $("senha-atual").value;
+    const nova = $("senha-nova").value;
+    const repetir = $("senha-repetir").value;
+    if (nova.length < 8) {
+      msg("senha-msg", "A senha nova precisa ter pelo menos 8 caracteres.");
+      focar("senha-nova");
+      return;
+    }
+    if (nova !== repetir) {
+      msg("senha-msg", "As duas senhas não estão iguais.");
+      focar("senha-repetir");
+      return;
+    }
+    if (nova === atual) {
+      msg("senha-msg", "Use uma senha diferente da provisória.");
+      focar("senha-nova");
+      return;
+    }
+    msg("senha-msg", "");
+    ocupado("senha", true, "Salvando…");
+    const r = await api("trocarSenha", { senhaAtual: atual, senhaNova: nova });
+    ocupado("senha", false, "Salvar e entrar");
+    if (!sessao) return; // a sessão terminou: já voltou para o login
+    if (!r.ok) {
+      msg("senha-msg", r.erro || "Não deu para trocar a senha.");
+      return;
+    }
+    sessao.usuario = Object.assign({}, sessao.usuario, { trocarSenha: false });
+    gravarSessao();
+    $("senha-atual").value = "";
+    $("senha-nova").value = "";
+    $("senha-repetir").value = "";
+    carregarSistema();
+  });
+  $("senha-voltar").addEventListener("click", () => { sair(); });
+
+  // ---------- busca o sistema e coloca na página ----------
+  async function carregarSistema() {
+    mostrar("carregando");
+    const r = await api("app", {});
+    if (!sessao) return; // a sessão terminou: já voltou para o login
+    if (r.ok && typeof r.app === "string" && r.app.trim()) {
+      injetar(r.app);
+      return;
+    }
+    msg("erro-msg", r.ok ? "O servidor não mandou o sistema." : (r.erro || "Não deu para abrir o sistema."));
+    mostrar("erro");
+    focar("erro-tentar");
+  }
+  $("erro-tentar").addEventListener("click", () => { carregarSistema(); });
+  $("erro-sair").addEventListener("click", () => { sair(); });
+
+  function injetar(html) {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = html;
+    // scripts vindos de innerHTML não rodam: anota a ordem para recriar depois
+    const velhos = Array.from(tpl.content.querySelectorAll("script"));
+    const casca = $("casca");
+    if (casca) casca.remove(); // some a casca; o <style> dela fica
+    injetado = true;
+    document.body.appendChild(tpl.content); // <style>, marcação e scripts (ainda parados), na ordem
+    for (const velho of velhos) {
+      const novo = document.createElement("script");
+      for (const a of Array.from(velho.attributes)) novo.setAttribute(a.name, a.value);
+      if (velho.hasAttribute("src")) novo.async = false; // externos também na ordem
+      novo.textContent = velho.textContent;
+      velho.replaceWith(novo); // roda aqui
+    }
+  }
+
+  // ---------- tema claro/escuro (mesma chave do sistema) ----------
+  const SVG_SOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+  const SVG_LUA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  function temaEscuro() {
+    const t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark" || t === "light") return t === "dark";
+    try { return matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) { return false; }
+  }
+  function desenharBotaoTema() {
+    const b = $("casca-tema");
+    if (!b) return; // o sistema já entrou e tem o botão dele
+    const escuro = temaEscuro();
+    b.innerHTML = escuro ? SVG_SOL : SVG_LUA;
+    b.setAttribute("aria-label", escuro ? "Mudar para tema claro" : "Mudar para tema escuro");
+    b.title = escuro ? "Tema claro" : "Tema escuro";
+  }
+  try {
+    const t = localStorage.getItem(CHAVE_TEMA);
+    if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+  $("casca-tema").addEventListener("click", () => {
+    const novo = temaEscuro() ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", novo);
+    try { localStorage.setItem(CHAVE_TEMA, novo); } catch (e) {}
+    desenharBotaoTema();
+  });
+  desenharBotaoTema();
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", desenharBotaoTema); } catch (e) {}
+
+  // ---------- começo ----------
+  let aviso = "";
+  try { aviso = sessionStorage.getItem(CHAVE_AVISO) || ""; sessionStorage.removeItem(CHAVE_AVISO); } catch (e) {}
+
+  if (!urlOk) {
+    if (apiUrl) {
+      $("config-atual").textContent = apiUrl;
+      $("config-errada").hidden = false;
+    }
+    mostrar("config");
+  } else if (sessao && !sessao.usuario.trocarSenha) {
+    carregarSistema();
+  } else {
+    limparSessao();
+    mostrarLogin(aviso);
+  }
+})();
+</script>
+</body>
+</html>
