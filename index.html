@@ -98,6 +98,12 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); f
   padding: 9px 10px; width: 100%; box-sizing: border-box; min-width: 0;
 }
 .c-fld input:focus { border-color: var(--muted); }
+/* olhinho para mostrar/esconder a senha */
+.c-senha { position: relative; display: block; }
+.c-senha input { padding-right: 44px; }
+.c-olho { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: inline-flex; background: transparent; border: 0; border-radius: 6px; padding: 6px; color: var(--muted); cursor: pointer; }
+.c-olho:hover { color: var(--fg); }
+.c-olho svg { width: 20px; height: 20px; }
 
 .c-btn { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 6px; padding: 9px 16px; font-weight: 600; }
 .c-btn-sec { background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; }
@@ -153,7 +159,7 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
             <input type="email" id="login-email" name="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
           </label>
           <label class="c-fld"><span>Senha</span>
-            <input type="password" id="login-senha" name="senha" autocomplete="current-password" required>
+            <span class="c-senha"><input type="password" id="login-senha" name="senha" autocomplete="current-password" required><button type="button" class="c-olho" data-olho="login-senha" aria-label="Mostrar senha" aria-pressed="false"></button></span>
           </label>
           <p class="c-msg" id="login-msg" role="alert"></p>
           <button type="submit" class="c-btn c-largo" id="login-btn">Entrar</button>
@@ -169,10 +175,10 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
           <input type="email" id="senha-email" name="email" autocomplete="username" tabindex="-1" aria-hidden="true" hidden>
           <input type="password" id="senha-atual" name="senha-atual" autocomplete="current-password" tabindex="-1" aria-hidden="true" hidden>
           <label class="c-fld"><span>Senha nova</span>
-            <input type="password" id="senha-nova" name="senha-nova" autocomplete="new-password" minlength="8" required>
+            <span class="c-senha"><input type="password" id="senha-nova" name="senha-nova" autocomplete="new-password" minlength="8" required><button type="button" class="c-olho" data-olho="senha-nova" aria-label="Mostrar senha" aria-pressed="false"></button></span>
           </label>
           <label class="c-fld"><span>Repita a senha nova</span>
-            <input type="password" id="senha-repetir" name="senha-repetir" autocomplete="new-password" minlength="8" required>
+            <span class="c-senha"><input type="password" id="senha-repetir" name="senha-repetir" autocomplete="new-password" minlength="8" required><button type="button" class="c-olho" data-olho="senha-repetir" aria-label="Mostrar senha" aria-pressed="false"></button></span>
           </label>
           <p class="c-msg" id="senha-msg" role="alert"></p>
           <div class="c-botoes">
@@ -216,6 +222,22 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
   const urlOk = /^https:\/\/\S+$/.test(apiUrl);
 
   const $ = (id) => document.getElementById(id);
+
+  // olhinho: mostra/esconde a senha do campo ao lado
+  const SVG_OLHO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const SVG_OLHO_FECHADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
+  document.querySelectorAll(".c-olho").forEach((b) => {
+    b.innerHTML = SVG_OLHO;
+    b.addEventListener("click", () => {
+      const inp = $(b.dataset.olho);
+      const mostrar = inp.type === "password";
+      inp.type = mostrar ? "text" : "password";
+      b.innerHTML = mostrar ? SVG_OLHO_FECHADO : SVG_OLHO;
+      b.setAttribute("aria-pressed", String(mostrar));
+      b.setAttribute("aria-label", mostrar ? "Esconder senha" : "Mostrar senha");
+      inp.focus();
+    });
+  });
 
   let sessao = lerSessao(); // só fica guardada no navegador depois da troca de senha (se for o primeiro acesso)
   let injetado = false;     // o sistema já está na página
