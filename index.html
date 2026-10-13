@@ -113,6 +113,11 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); f
 .c-olho svg { width: 20px; height: 20px; }
 /* número da versão (o mesmo do sistema; ver VERSOES.md) */
 .c-versao { margin: 12px 0 0; text-align: center; color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; }
+/* aviso de versão nova (o <style> da casca continua na página depois que o sistema entra) */
+.c-nova-versao { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; max-width: calc(100vw - 32px); padding: 10px 14px;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); font-size: .92rem; }
+.c-nova-versao button { font: inherit; font-weight: 600; cursor: pointer; border: 0; border-radius: 8px; padding: 6px 12px; background: var(--accent); color: var(--accent-fg, #fff); }
 
 .c-btn { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 6px; padding: 9px 16px; font-weight: 600; }
 .c-btn-sec { background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; }
@@ -223,6 +228,9 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
   const CHAVE_SESSAO = "ps-sessao";     // { token, usuario }
   const CHAVE_TEMA = "projetos-tema";   // a mesma do sistema
   const CHAVE_AVISO = "ps-aviso";       // recado para a tela de login depois de recarregar
+  const CHAVE_APP = "ps-app";           // o sistema guardado { hash, html }: abre na hora
+  const CHAVE_DADOS = "ps-dados";       // os últimos projetos vistos (quem grava é o sistema)
+  const CHAVE_RECARGA = "ps-recarregou"; // hash da versão nova que já fez esta aba recarregar (não entra em laço)
   const MSG_REDE = "Sem conexão com o servidor. Tente de novo.";
   const MSG_ESTRANHA = "O servidor respondeu algo inesperado. Confira a URL no config.js.";
   const MSG_SESSAO = "Sua sessão terminou. Entre de novo.";
@@ -268,6 +276,29 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
   function limparSessao() {
     sessao = null;
     try { localStorage.removeItem(CHAVE_SESSAO); } catch (e) {}
+    limparGuardados();
+  }
+
+  // ---------- sistema e projetos guardados no navegador (só com sessão; Sair apaga) ----------
+  function lerApp() {
+    try {
+      const a = JSON.parse(localStorage.getItem(CHAVE_APP) || "null");
+      if (a && typeof a.hash === "string" && a.hash && typeof a.html === "string" && a.html.trim()) return a;
+    } catch (e) {}
+    return null;
+  }
+  // devolve se gravou mesmo (navegador cheio: apaga o velho, para não abrir uma versão antiga)
+  function gravarApp(hash, html) {
+    try {
+      localStorage.setItem(CHAVE_APP, JSON.stringify({ hash: hash, html: html }));
+      const a = lerApp();
+      if (a && a.hash === hash) return true;
+    } catch (e) {}
+    try { localStorage.removeItem(CHAVE_APP); } catch (e) {}
+    return false;
+  }
+  function limparGuardados() {
+    try { localStorage.removeItem(CHAVE_APP); localStorage.removeItem(CHAVE_DADOS); } catch (e) {}
   }
 
   // ---------- conversa com o servidor ----------
@@ -294,8 +325,18 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
     const extra = dados && typeof dados === "object" ? dados : {};
     const token = sessao ? sessao.token : "";
     const resp = await post({ acao: acao, token: token, ...extra });
-    if (!resp.ok && resp.codigo === "sessao" && (!sessao || sessao.token === token)) sessaoVencida();
+    if (!resp.ok && (!sessao || sessao.token === token)) {
+      if (resp.codigo === "sessao") sessaoVencida();
+      // abrir o sistema e ver os projetos pedem o nível mínimo: "permissao" aqui = acesso bloqueado na planilha
+      else if (resp.codigo === "permissao" && (acao === "app" || acao === "carregar")) semAcesso();
+    }
     return resp;
+  }
+
+  // a sessão vale, mas a pessoa não pode ver nada: apaga o guardado e volta para a tela de erro da casca
+  function semAcesso() {
+    limparGuardados();
+    if (injetado && !saindo) { saindo = true; location.reload(); }
   }
 
   function sessaoVencida() {
@@ -463,10 +504,20 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
 
   // ---------- busca o sistema e coloca na página ----------
   async function carregarSistema() {
+    // já tem o sistema guardado neste navegador: abre na hora e confere a versão em segundo plano
+    const guardado = lerApp();
+    if (guardado) {
+      injetar(guardado.html);
+      conferirVersao(guardado);
+      return;
+    }
     mostrar("carregando");
-    const r = await api("app", {});
+    // primeira vez neste navegador: o sistema e os projetos num pedido só
+    const r = await api("app", { comDados: true });
     if (!sessao) return; // a sessão terminou: já voltou para o login
     if (r.ok && typeof r.app === "string" && r.app.trim()) {
+      if (typeof r.hash === "string" && r.hash) gravarApp(r.hash, r.app);
+      if (r.dados && typeof r.dados === "object") window.PS.dadosIniciais = r.dados;
       injetar(r.app);
       return;
     }
@@ -474,6 +525,48 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
     mostrar("erro");
     focar("erro-tentar");
   }
+  // publicaram uma versão nova: guarda e troca. Se a pessoa ainda não mexeu (acabou de abrir), recarrega já
+  // (uma vez só por versão nesta aba); senão aparece um aviso com o botão "Atualizar agora".
+  let abriuEm = 0, mexeu = false;
+  // impressão digital do sistema guardado, calculada aqui (igual à do servidor): cópia mexida ou estragada é trocada
+  async function hashDe(html) {
+    try {
+      const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(html));
+      return Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, "0")).join("").slice(0, 32);
+    } catch (e) { return ""; }
+  }
+  async function conferirVersao(guardado) {
+    const hash = (await hashDe(guardado.html)) || guardado.hash;
+    const r = await api("app", { hash: hash });
+    if (!sessao || !r.ok || r.mesmo || typeof r.app !== "string" || !r.app.trim()) return;
+    // servidor sem hash (voltaram para uma versão de antes do sistema guardado): esquece o guardado
+    const semHash = typeof r.hash !== "string" || !r.hash;
+    if (semHash) { try { localStorage.removeItem(CHAVE_APP); } catch (e) {} }
+    else if (!gravarApp(r.hash, r.app)) { mostrarNovaVersao(); return; } // não coube: Atualizar busca do servidor
+    const marca = semHash ? "sem-hash" : r.hash;
+    let jaRecarregou = false;
+    try { jaRecarregou = sessionStorage.getItem(CHAVE_RECARGA) === marca; } catch (e) {}
+    if (!mexeu && !jaRecarregou && Date.now() - abriuEm < 15000) {
+      try { sessionStorage.setItem(CHAVE_RECARGA, marca); } catch (e) {}
+      location.reload();
+      return;
+    }
+    mostrarNovaVersao();
+  }
+  function mostrarNovaVersao() {
+    if ($("ps-nova-versao")) return;
+    const b = document.createElement("div");
+    b.id = "ps-nova-versao"; b.className = "c-nova-versao"; b.setAttribute("role", "status");
+    const t = document.createElement("span");
+    t.textContent = "Saiu uma versão nova do sistema.";
+    const bt = document.createElement("button");
+    bt.type = "button"; bt.textContent = "Atualizar agora";
+    bt.addEventListener("click", () => location.reload());
+    b.append(t, bt);
+    document.body.appendChild(b);
+  }
+  ["pointerdown", "keydown"].forEach((ev) => document.addEventListener(ev, () => { mexeu = true; }, { capture: true, passive: true }));
+
   $("erro-tentar").addEventListener("click", () => { carregarSistema(); });
   $("erro-sair").addEventListener("click", () => { sair(); });
 
@@ -485,6 +578,7 @@ try { var t = localStorage.getItem("projetos-tema"); if (t === "dark" || t === "
     const casca = $("casca");
     if (casca) casca.remove(); // some a casca; o <style> dela fica
     injetado = true;
+    abriuEm = Date.now();
     document.body.appendChild(tpl.content); // <style>, marcação e scripts (ainda parados), na ordem
     for (const velho of velhos) {
       const novo = document.createElement("script");
